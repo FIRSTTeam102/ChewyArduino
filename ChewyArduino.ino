@@ -5,7 +5,7 @@
 #define PIN_PLUNGER 7
 #define PIN_GATE 4
 #define PIN_COMPRESSOR_SENSOR 8
-#define SWITCH_ARM 12
+#define SWITCH_OFF 12
 #define SWITCH_FIRE 11
 
 bool primed = false;
@@ -23,7 +23,7 @@ void setup() {
 	pinMode(PIN_GATE, OUTPUT);
 	digitalWrite(PIN_GATE, HIGH);
 	pinMode(PIN_COMPRESSOR_SENSOR, INPUT);
-	pinMode(SWITCH_ARM, INPUT_PULLUP);
+	pinMode(SWITCH_OFF, INPUT_PULLUP);
 	pinMode(SWITCH_FIRE, INPUT_PULLUP);
 	Serial.begin(9600);
 }
@@ -35,12 +35,12 @@ void loop() {
 		digitalWrite(PIN_COMPRESSOR, LOW);
 	}
 
-	if (digitalRead(SWITCH_ARM)) {
-		Serial.println("Spinning...");
-		spinner.write(2000);
-	} else {
+	if (!digitalRead(SWITCH_OFF)) {
 		Serial.println("Stopping spinner");
 		spinner.write(1500);
+	} else {
+		Serial.println("Spinning...");
+		spinner.write(2000);
 	}
 
 	// pulled to fire, about to go
@@ -48,7 +48,8 @@ void loop() {
 		primed = true;
 	}
 	// fire when released back to arm
-	if (digitalRead(SWITCH_FIRE) && primed) {
+	if (!!digitalRead(SWITCH_OFF) && !!digitalRead(SWITCH_FIRE) && primed) {
+		primed = false;
 		Serial.println("Shooting!");
 		digitalWrite(PIN_PLUNGER, LOW);
 		delay(1000);
@@ -57,6 +58,5 @@ void loop() {
 		digitalWrite(PIN_PLUNGER, HIGH);
 		delay(500);
 		digitalWrite(PIN_GATE, HIGH);
-		primed = false;
 	}
 }
